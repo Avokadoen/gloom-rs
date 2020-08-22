@@ -1,3 +1,3 @@
-pub mod vao;
+pub mod triangle;
 pub mod helpers;
 pub mod shader;

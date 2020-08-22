@@ -3,15 +3,14 @@ use gl::types::{GLuint, GLsizei};
 
 use super::helpers;
 
-// TODO: This is more than just a VAO, rename to something else
-pub struct Vao {
+pub struct Triangle {
     id: GLuint,
     b_ids: [GLuint; 2],
     pub count: GLsizei
 }
 
 
-impl Drop for Vao {
+impl Drop for Triangle {
     fn drop(&mut self) {
         unsafe {
             gl::DeleteBuffers(2, self.b_ids.as_ptr());
@@ -21,11 +20,11 @@ impl Drop for Vao {
 }
 
 // TODO: errors
-impl Vao {
+impl Triangle {
     pub const VERT_INDX: usize = 0;
     pub const INDC_INDX: usize = 1;
 
-    pub fn init(vertices: &Vec<f32>, indices: &Vec<u32>) -> Vao  {
+    pub fn init(vertices: &Vec<f32>, indices: &Vec<u32>) -> Triangle  {
         let mut id: GLuint = 0;
         let mut b_ids: [GLuint; 2] = [0; 2];
 
@@ -36,7 +35,7 @@ impl Vao {
             gl::GenBuffers(2, b_ids.as_mut_ptr());
 
             // instantiate vertices buffer
-            gl::BindBuffer(gl::ARRAY_BUFFER, b_ids[Vao::VERT_INDX]);
+            gl::BindBuffer(gl::ARRAY_BUFFER, b_ids[Triangle::VERT_INDX]);
             gl::BufferData(
                 gl::ARRAY_BUFFER, 
                 helpers::byte_size_of_array(vertices),
@@ -45,7 +44,7 @@ impl Vao {
             );
             
             // instantiate indices buffer
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, b_ids[Vao::INDC_INDX]);
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, b_ids[Triangle::INDC_INDX]);
             gl::BufferData(
                 gl::ELEMENT_ARRAY_BUFFER, 
                 helpers::byte_size_of_array(indices),
@@ -53,7 +52,7 @@ impl Vao {
                 gl::STATIC_DRAW
             );
             
-            // Vertex
+            // Vertex attributes
             gl::EnableVertexAttribArray(0);
             let components = 3;
             let stride = components * helpers::size_of::<f32>();
@@ -72,7 +71,7 @@ impl Vao {
             gl::BindVertexArray(0);
         }
 
-        Vao {
+        Triangle {
             id,
             b_ids,
             count: indices.len() as i32
@@ -82,8 +81,8 @@ impl Vao {
     pub fn bind(&self) {
         unsafe {
             gl::BindVertexArray(self.id);
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.b_ids[Vao::VERT_INDX]);
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.b_ids[Vao::INDC_INDX]);
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.b_ids[Triangle::VERT_INDX]);
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.b_ids[Triangle::INDC_INDX]);
         }
     }
 

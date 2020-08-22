@@ -11,7 +11,7 @@ mod util;
 mod gl_utils;
 
 use gl_utils::{
-    vao::Vao,
+    triangle::Triangle,
     shader
 };
 
@@ -21,8 +21,7 @@ use glutin::event_loop::ControlFlow;
 const SCREEN_W: u32 = 800;
 const SCREEN_H: u32 = 600;
 
-
-// Using Vao abstraction (See gl_utils::vao)
+// Using Triangle abstraction (See gl_utils::triangle)
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -61,26 +60,36 @@ fn main() {
         }
 
         // == // Set up your VAO here
-        let test_vao = {
-            let vertices = vec![
-                -0.6, -0.6, 0.0,
-                 0.6, -0.6, 0.0,
-                 0.0,  0.6, 0.0,
+        // opengl goes from -1 to 1
+        let mut pos: f32 = -1.0;
+        let stride: f32 = 2.0 / 5.0;
+        let mut vertices = Vec::<f32>::new();
+        let mut indices = Vec::<u32>::new();
+        for i in 0..5 {
+            let mut new_triangle = vec![
+                pos, -0.5, 0.0,
+                pos + stride, -0.5, 0.0,
+                pos + stride / 2.0, 0.5, 0.0
             ];
-            let indices = vec![0, 1, 2];
 
-           Vao::init(&vertices, &indices)
+            vertices.append(&mut new_triangle);
+            let index = i * 3;
+            indices.append(&mut vec![index, index + 1, index + 2]);
+
+            pos += stride;
+        }
+
+        // We could also inline hardcoded 5 triangles, but what's the fun in that ;)
+        // Of course this would lead to easier code to read which is faster and objectively better ...
+        let my_triangle = {
+           Triangle::init(&vertices, &indices)
         };
 
         // Basic usage of shader helper
-        // The code below returns a shader object, which contains the field .program_id
-        // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
-        let program = {
-            shader::ProgramBuilder::new()
-                .attach_file("assets/shaders/simple.vert")
-                .attach_file("assets/shaders/simple.frag")
-                .link()
-        };
+        let program = shader::ProgramBuilder::new()
+            .attach_file("assets/shaders/simple.vert")
+            .attach_file("assets/shaders/simple.frag")
+            .link();
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -115,17 +124,18 @@ fn main() {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
 
-                test_vao.bind();
+                my_triangle.bind();
                 gl::UseProgram(program.program_id);
        
                 gl::DrawElements(
                     gl::TRIANGLES,
-                    test_vao.count,
+                    my_triangle.count,
                     gl::UNSIGNED_INT,
                     std::ptr::null() 
                 );
 
-                test_vao.unbind();
+                gl::UseProgram(0);
+                my_triangle.unbind();
             }
 
             context.swap_buffers().unwrap();
