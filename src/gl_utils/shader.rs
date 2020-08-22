@@ -6,11 +6,13 @@ use std::{
     path::Path,
 };
 
-pub struct Shader {
+// TODO: Error handling
+
+pub struct Program {
     pub program_id: u32,
 }
 
-pub struct ShaderBuilder {
+pub struct ProgramBuilder {
     program_id: u32,
     shaders: Vec::<u32>,
 }
@@ -49,36 +51,45 @@ impl ShaderType {
     }
 }
 
-impl ShaderBuilder {
-    pub unsafe fn new() -> ShaderBuilder {
-        ShaderBuilder {
-            program_id: gl::CreateProgram(),
+impl ProgramBuilder {
+    pub fn new() -> ProgramBuilder {
+        let program_id = unsafe {
+            gl::CreateProgram()
+        };
+
+        ProgramBuilder {
+            program_id,
             shaders: vec![],
         }
     }
 
-    pub unsafe fn attach_file(self, shader_path: &str) -> ShaderBuilder {
+    pub fn attach_file(self, shader_path: &str) -> ProgramBuilder {
         let path = Path::new(shader_path);
         if let Some(extension) = path.extension() {
             let shader_type = ShaderType::from_ext(extension)
                 .expect("Failed to parse file extension.");
             let shader_src = std::fs::read_to_string(path)
                 .expect(&format!("Failed to read shader source. {}", shader_path));
+
             self.compile_shader(&shader_src, shader_type)
         } else {
             panic!("Failed to read extension of file with path: {}", shader_path);
         }
     }
 
-    pub unsafe fn compile_shader(mut self, shader_src: &str, shader_type: ShaderType) -> ShaderBuilder {
-        let shader = gl::CreateShader(shader_type.into());
-        let c_str_shader = CString::new(shader_src.as_bytes()).unwrap();
-        gl::ShaderSource(shader, 1, &c_str_shader.as_ptr(), ptr::null());
-        gl::CompileShader(shader);
+    pub fn compile_shader(mut self, shader_src: &str, shader_type: ShaderType) -> ProgramBuilder {
+        let shader = unsafe {
+            let shader = gl::CreateShader(shader_type.into());
+            let c_str_shader = CString::new(shader_src.as_bytes()).unwrap();
 
-        if !self.check_shader_errors(shader) {
-            panic!("Shader failed to compile.");
-        }
+            gl::ShaderSource(shader, 1, &c_str_shader.as_ptr(), ptr::null());
+            gl::CompileShader(shader);
+            if !self.check_shader_errors(shader) {
+                panic!("Shader failed to compile.");
+            }
+
+            shader
+        };
 
         self.shaders.push(shader);
 
@@ -88,6 +99,7 @@ impl ShaderBuilder {
     unsafe fn check_shader_errors(&self, shader_id: u32) -> bool {
         let mut success = i32::from(gl::FALSE);
         let mut info_log = Vec::with_capacity(512);
+
         info_log.set_len(512 - 1);
         gl::GetShaderiv(shader_id, gl::COMPILE_STATUS, &mut success);
         if success != i32::from(gl::TRUE) {
@@ -100,12 +112,14 @@ impl ShaderBuilder {
             println!("ERROR::Shader Compilation Failed!\n{}", String::from_utf8_lossy(&info_log));
             return false;
         }
+
         true
     }
 
     unsafe fn check_linker_errors(&self) -> bool {
         let mut success = i32::from(gl::FALSE);
         let mut info_log = Vec::with_capacity(512);
+
         info_log.set_len(512 - 1);
         gl::GetProgramiv(self.program_id, gl::LINK_STATUS, &mut success);
         if success != i32::from(gl::TRUE) {
@@ -121,20 +135,22 @@ impl ShaderBuilder {
         true
     }
 
-    pub unsafe fn link(self) -> Shader {
-        for &shader in &self.shaders {
-            gl::AttachShader(self.program_id, shader);
+    pub fn link(self) -> Program {
+        unsafe {
+            for &shader in &self.shaders {
+                gl::AttachShader(self.program_id, shader);
+            }
+            gl::LinkProgram(self.program_id);
+    
+            // todo:: use this to make safer abstraction
+            self.check_linker_errors();
+    
+            for &shader in &self.shaders {
+                gl::DeleteShader(shader);
+            }
         }
-        gl::LinkProgram(self.program_id);
 
-        // todo:: use this to make safer abstraction
-        self.check_linker_errors();
-
-        for &shader in &self.shaders {
-            gl::DeleteShader(shader);
-        }
-
-        Shader {
+        Program {
             program_id: self.program_id
         }
     }

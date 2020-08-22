@@ -1,16 +1,19 @@
 extern crate nalgebra_glm as glm;
-use gl::types::*;
+extern crate gl;
+
 use std::{
-    mem,
     ptr,
-    str,
-    os::raw::c_void,
 };
 use std::thread;
 use std::sync::{Mutex, Arc, RwLock};
 
-mod shader;
 mod util;
+mod gl_utils;
+
+use gl_utils::{
+    vao::Vao,
+    shader
+};
 
 use glutin::event::{Event, WindowEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -18,29 +21,8 @@ use glutin::event_loop::ControlFlow;
 const SCREEN_W: u32 = 800;
 const SCREEN_H: u32 = 600;
 
-// Helper functions to make interacting with OpenGL a little bit prettier. You will need these!
-// The names should be pretty self explanatory
-fn byte_size_of_array<T>(val: &[T]) -> isize {
-    std::mem::size_of_val(&val[..]) as isize
-}
 
-// Get the OpenGL-compatible pointer to an arbitrary array of numbers
-fn pointer_to_array<T>(val: &[T]) -> *const c_void {
-    &val[0] as *const T as *const c_void
-}
-
-// Get the size of the given type in bytes
-fn size_of<T>() -> i32 {
-    mem::size_of::<T>() as i32
-}
-
-// Get an offset in bytes for n units of type T
-fn offset<T>(n: u32) -> *const c_void {
-    (n * mem::size_of::<T>() as u32) as *const T as *const c_void
-}
-
-// == // Modify and complete the function below for the first task
-// unsafe fn FUNCTION_NAME(ARGUMENT_NAME: &Vec<f32>, ARGUMENT_NAME: &Vec<u32>) -> u32 { } 
+// Using Vao abstraction (See gl_utils::vao)
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -79,14 +61,26 @@ fn main() {
         }
 
         // == // Set up your VAO here
-        unsafe {
+        let test_vao = {
+            let vertices = vec![
+                -0.6, -0.6, 0.0,
+                 0.6, -0.6, 0.0,
+                 0.0,  0.6, 0.0,
+            ];
+            let indices = vec![0, 1, 2];
 
-        }
+           Vao::init(&vertices, &indices)
+        };
 
         // Basic usage of shader helper
         // The code below returns a shader object, which contains the field .program_id
         // The snippet is not enough to do the assignment, and will need to be modified (outside of just using the correct path)
-        // shader::Shaderbuilder::new().attach_file("./path/to/shader").link();
+        let program = {
+            shader::ProgramBuilder::new()
+                .attach_file("assets/shaders/simple.vert")
+                .attach_file("assets/shaders/simple.frag")
+                .link()
+        };
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -121,13 +115,17 @@ fn main() {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
 
-                // Issue the necessary commands to draw your scene here
+                test_vao.bind();
+                gl::UseProgram(program.program_id);
+       
+                gl::DrawElements(
+                    gl::TRIANGLES,
+                    test_vao.count,
+                    gl::UNSIGNED_INT,
+                    std::ptr::null() 
+                );
 
-
-
-
-
-                
+                test_vao.unbind();
             }
 
             context.swap_buffers().unwrap();
