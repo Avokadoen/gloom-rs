@@ -93,9 +93,9 @@ fn main() {
 
 
         // TODO: this could be done using a helper function in Program impl
-        let elapsed_location = unsafe { 
-            gl::GetUniformLocation(program.program_id, b"elapsed".as_ptr() as *const i8)
-        };
+        // let elapsed_location = unsafe { 
+        //     gl::GetUniformLocation(program.program_id, b"elapsed".as_ptr() as *const i8)
+        // };
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -133,7 +133,7 @@ fn main() {
                 my_triangle.bind();
                 gl::UseProgram(program.program_id);
 
-                gl::Uniform1f(elapsed_location, elapsed);
+                // gl::Uniform1f(elapsed_location, elapsed);
        
                 gl::DrawElements(
                     gl::TRIANGLES,
