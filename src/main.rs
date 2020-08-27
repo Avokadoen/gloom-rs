@@ -12,6 +12,7 @@ mod gl_utils;
 
 use gl_utils::{
     triangle::Triangle,
+    bindable::Bindable,
     shader
 };
 
@@ -86,16 +87,15 @@ fn main() {
         };
 
         // Basic usage of shader helper
-        let program = shader::ProgramBuilder::new()
+        let mut program = shader::ProgramBuilder::new()
             .attach_file("assets/shaders/simple.vert")
-            .attach_file("assets/shaders/simple.frag")
+            .attach_file("assets/shaders/simple_elapsed.frag")
             .link();
 
-
-        // TODO: this could be done using a helper function in Program impl
-        // let elapsed_location = unsafe { 
-        //     gl::GetUniformLocation(program.program_id, b"elapsed".as_ptr() as *const i8)
-        // };
+        if let Err(e) = program.find_uniform("elapsed") {
+            eprint!("Failed to find elapsed, probably loading wrong shader. err: {}", e);
+            return;
+        };
 
         // Used to demonstrate keyboard handling -- feel free to remove
         let mut _arbitrary_number = 0.0;
@@ -133,7 +133,10 @@ fn main() {
                 my_triangle.bind();
                 gl::UseProgram(program.program_id);
 
-                // gl::Uniform1f(elapsed_location, elapsed);
+                match program.set_uniform("elapsed", elapsed, gl::Uniform1f) {
+                    Ok(()) => (),
+                    Err(e) => println!("{}", e)
+                };
        
                 gl::DrawElements(
                     gl::TRIANGLES,

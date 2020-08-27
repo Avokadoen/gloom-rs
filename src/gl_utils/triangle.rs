@@ -1,7 +1,10 @@
 use gl;
 use gl::types::{GLuint, GLsizei};
 
-use super::helpers;
+use super::{
+    helpers,
+    bindable::Bindable
+};
 
 pub struct Triangle {
     id: GLuint,
@@ -15,6 +18,24 @@ impl Drop for Triangle {
         unsafe {
             gl::DeleteBuffers(2, self.b_ids.as_ptr());
             gl::DeleteVertexArrays(1, self.id as *const u32);
+        }
+    }
+}
+
+impl Bindable for Triangle {
+    fn bind(&self) {
+        unsafe {
+            gl::BindVertexArray(self.id);
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.b_ids[Triangle::VERT_INDX]);
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.b_ids[Triangle::INDC_INDX]);
+        }
+    }
+
+    fn unbind(&self) {
+        unsafe {
+            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
+            gl::BindVertexArray(0);
         }
     }
 }
@@ -77,22 +98,4 @@ impl Triangle {
             count: indices.len() as i32
         }
     }
-
-    pub fn bind(&self) {
-        unsafe {
-            gl::BindVertexArray(self.id);
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.b_ids[Triangle::VERT_INDX]);
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.b_ids[Triangle::INDC_INDX]);
-        }
-    }
-
-    pub fn unbind(&self) {
-        unsafe {
-            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
-            gl::BindVertexArray(0);
-        }
-    }
-
-
 }
