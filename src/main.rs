@@ -67,9 +67,9 @@ fn main() {
         let mut indices = Vec::<u32>::new();
         for i in 0..5 {
             let mut new_triangle = vec![
-                pos, -0.5, -2.0,
-                pos + stride, -0.5, -2.0,
-                pos + stride / 2.0, 0.5, -2.0
+                pos, -0.5, 0.0,
+                pos + stride, -0.5, 0.0,
+                pos + stride / 2.0, 0.5, 0.0
             ];
 
             vertices.append(&mut new_triangle);
@@ -96,6 +96,20 @@ fn main() {
             eprint!("Failed to find elapsed, probably loading wrong shader. err: {}", e);
             return;
         };
+
+        if let Err(e) = program.locate_uniform("c_trans") {
+            eprint!("Failed to find c_trans, probably loading wrong shader. err: {}", e);
+            return;
+        };
+
+        let mut c_trans = glm::identity::<f32, glm::U4>();
+        c_trans = glm::translate(&c_trans, &glm::vec3(0.0, 0.0, -2.0));
+
+        if let Err(e) = program.set_uniform_matrix("c_trans", c_trans.as_ptr(), gl::UniformMatrix4fv) {
+            eprintln!("{}", e);
+        };
+
+        println!("{}", c_trans);
 
         if let Err(e) = program.locate_uniform("projection") {
             eprint!("Failed to find projection, probably loading wrong shader. err: {}", e);

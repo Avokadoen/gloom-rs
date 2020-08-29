@@ -9,7 +9,12 @@ use gl::types::{
     GLint
 };
 
-use std::{collections::HashMap, ffi::CString, ptr, path::Path};
+use std::{
+    collections::HashMap, 
+    ffi::CString, 
+    ptr, 
+    path::Path
+};
 
 pub struct Program {
     pub program_id: u32,

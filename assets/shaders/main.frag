@@ -6,8 +6,8 @@ out vec4 color;
 
 void main()
 {
-    float slowElapse = elapsed * 0.4;
-    float sinElapsed = max(sin(slowElapse), 0.05);
-    float cosElapsed = max(cos(slowElapse), 0.05);
-    color = vec4(sinElapsed, cosElapsed, sinElapsed, 1.0f);
+    float slow_elapse = elapsed * 0.4;
+    float sin_elapsed = max(sin(slow_elapse), 0.05);
+    float cos_elapsed = max(cos(slow_elapse), 0.05);
+    color = vec4(sin_elapsed, cos_elapsed, sin_elapsed, 1.0f);
 }
