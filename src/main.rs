@@ -12,8 +12,7 @@ mod gl_utils;
 
 use gl_utils::{
     triangle::Triangle,
-    bindable::Bindable,
-    shader
+    bindable::Bindable, shaders::program::ProgramBuilder
 };
 
 use glutin::event::{Event, WindowEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
@@ -68,9 +67,9 @@ fn main() {
         let mut indices = Vec::<u32>::new();
         for i in 0..5 {
             let mut new_triangle = vec![
-                pos, -0.5, 0.0,
-                pos + stride, -0.5, 0.0,
-                pos + stride / 2.0, 0.5, 0.0
+                pos, -0.5, -2.0,
+                pos + stride, -0.5, -2.0,
+                pos + stride / 2.0, 0.5, -2.0
             ];
 
             vertices.append(&mut new_triangle);
@@ -87,14 +86,31 @@ fn main() {
         };
 
         // Basic usage of shader helper
-        let mut program = shader::ProgramBuilder::new()
-            .attach_file("assets/shaders/simple.vert")
-            .attach_file("assets/shaders/simple_elapsed.frag")
+        let mut program = ProgramBuilder::new()
+            .attach_file("assets/shaders/main.vert")
+            .attach_file("assets/shaders/main.frag")
             .link();
 
-        if let Err(e) = program.find_uniform("elapsed") {
+            
+        if let Err(e) = program.locate_uniform("elapsed") {
             eprint!("Failed to find elapsed, probably loading wrong shader. err: {}", e);
             return;
+        };
+
+        if let Err(e) = program.locate_uniform("projection") {
+            eprint!("Failed to find projection, probably loading wrong shader. err: {}", e);
+            return;
+        };
+
+        let projection = glm::perspective::<f32>(
+            SCREEN_W as f32 / SCREEN_H as f32, 
+            1.4, 
+            0.1, 
+            40.0
+        );
+
+        if let Err(e) = program.set_uniform_matrix("projection", projection.as_ptr(), gl::UniformMatrix4fv) {
+            eprintln!("{}", e);
         };
 
         // Used to demonstrate keyboard handling -- feel free to remove
@@ -119,8 +135,6 @@ fn main() {
                         VirtualKeyCode::D => {
                             _arbitrary_number -= delta_time;
                         },
-
-
                         _ => { }
                     }
                 }
@@ -133,9 +147,8 @@ fn main() {
                 my_triangle.bind();
                 gl::UseProgram(program.program_id);
 
-                match program.set_uniform("elapsed", elapsed, gl::Uniform1f) {
-                    Ok(()) => (),
-                    Err(e) => println!("{}", e)
+                if let Err(e) = program.set_uniform1("elapsed", elapsed, gl::Uniform1f) {
+                    eprintln!("{}", e)
                 };
        
                 gl::DrawElements(
