@@ -1,3 +1,7 @@
+# REPO MOVED
+
+[new repo](https://github.com/Avokadoen/TDT4195_code)
+
 # Gloom-rs
 
 This is a fork of gloom-rs for a graphics course at NTNU (TDT4195)

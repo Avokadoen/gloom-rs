@@ -91,7 +91,6 @@ fn main() {
             .attach_file("assets/shaders/main.frag")
             .link();
 
-            
         if let Err(e) = program.locate_uniform("elapsed") {
             eprint!("Failed to find elapsed, probably loading wrong shader. err: {}", e);
             return;
@@ -109,8 +108,6 @@ fn main() {
             eprintln!("{}", e);
         };
 
-        println!("{}", c_trans);
-
         if let Err(e) = program.locate_uniform("projection") {
             eprint!("Failed to find projection, probably loading wrong shader. err: {}", e);
             return;
@@ -127,9 +124,6 @@ fn main() {
             eprintln!("{}", e);
         };
 
-        // Used to demonstrate keyboard handling -- feel free to remove
-        let mut _arbitrary_number = 0.0;
-
         let first_frame_time = std::time::Instant::now();
         let mut last_frame_time = first_frame_time;
         // The main rendering loop
@@ -140,19 +134,17 @@ fn main() {
             last_frame_time = now;
 
             // Handle keyboard input
-            if let Ok(keys) = pressed_keys.lock() {
-                for key in keys.iter() {
-                    match key {
-                        VirtualKeyCode::A => {
-                            _arbitrary_number += delta_time;
-                        },
-                        VirtualKeyCode::D => {
-                            _arbitrary_number -= delta_time;
-                        },
-                        _ => { }
-                    }
-                }
-            }
+            // if let Ok(keys) = pressed_keys.lock() {
+            //     for key in keys.iter() {
+            //         match key {
+            //             VirtualKeyCode::W => {
+            //             },
+            //             VirtualKeyCode::S => {
+            //             },
+            //             _ => { }
+            //         }
+            //     }
+            // }
 
             unsafe {
                 gl::ClearColor(0.163, 0.163, 0.163, 1.0);
